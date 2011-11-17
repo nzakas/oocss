@@ -156,7 +156,7 @@
     </target>
     
     <!-- Build all files -->
-    <target name="build.all" depends="clean,build.core,build.core.debug,build.plugins">
+    <target name="build.all" depends="clean,lint,build.core,build.core.debug,build.plugins">
         <concat destfile="${build.dir}/${all.build.file}"  fixlastline="true">         
             <filelist dir="${build.dir}" files="${core.build.file},${plugins.build.file}"/>
         </concat>        
