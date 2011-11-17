@@ -1,0 +1,163 @@
+<project name="clovercss" default="build.all">
+
+    <!-- version number -->
+    <property name="clovercss.version" value="0.1.0" />
+
+    <!-- the directories containing the source files -->
+    <property name="src.dir" value="./src" />
+    <property name="src.core.dir" value="./src/core" />
+    <property name="src.plugins.dir" value="./src/plugins" />
+    
+    <!-- the directories and files to output to -->
+    <property name="build.dir" value="./build" />
+    <property name="release.dir" value="./release" />
+
+    <!-- the directory containing library files -->
+    <property name="lib.dir" value="./lib" /> 
+
+    <!-- output filenames -->
+    <property name="core.build.file" value="clover-core.css"/>
+    <property name="plugins.build.file" value="clover-plugins.css"/>
+    <property name="all.build.file" value="clover.css"/>
+    <property name="core.debug.file" value="clover-core_debug.css"/>
+    <property name="plugins.debug.file" value="clover-plugins_debug.css"/>
+    <property name="all.debug.file" value="clover_debug.css"/>
+    
+    <!-- external resources -->
+    <property name="csslint.url" value="https://raw.github.com/stubbornella/csslint/master/release/csslint-rhino.js"/>
+    
+    <!-- embeddable license -->
+    <loadfile property="license.text" srcfile="LICENSE" />   
+
+    <!-- get a timestamp -->
+    <tstamp>
+      <format property="RIGHT_NOW"
+              pattern="d-MMMM-yyyy hh:mm:ss"
+              locale="en,US"/>
+    </tstamp>
+    <tstamp>
+      <format property="SIMPLE_DATE"
+              pattern="MMMM d, yyyy"
+              locale="en,US"/>
+    </tstamp>    
+    
+    <!-- clean -->
+    <target name="clean">
+        <delete dir="${build.dir}" />
+    </target>
+    
+    <target name="changelog.update">
+        <exec executable="git" failonerror="true" outputproperty="git.tag">
+            <arg line="tag"/>
+        </exec>      
+        <script language="javascript"><![CDATA[
+            //get the most recent tag to get the diff
+            var tags = clovercss.getProperty("git.tag").replace("\r", "").split("\n"),
+                lastTag = tags[tags.length-1];
+            clovercss.setProperty("git.log.range", lastTag + "..HEAD");
+        ]]></script>
+        
+        <!-- git log -pretty=format:'* %s (%an)' v0.4.0..v0.5.0-->
+        <exec executable="git" failonerror="true" outputproperty="git.changelog">
+            <arg line="log --pretty=format:'* %s (%an)' ${git.log.range}"/>
+        </exec>      
+        
+        <concat destfile="CHANGELOG.tmp"  fixlastline="true">
+            <header trimleading="yes">${SIMPLE_DATE} - v${clovercss.version}
+            
+            ${git.changelog}
+            
+            </header>
+            <fileset dir="." includes="CHANGELOG" />
+        </concat>
+        
+        <delete file="CHANGELOG"/>
+        <move file="CHANGELOG.tmp" tofile="CHANGELOG"/>
+        
+    </target>
+    
+    <!-- validate CSS files with CSS Lint -->
+    <target name="lint">       
+        <fileset dir="${src.dir}" includes="**/*.css" id="cssfiles.raw"/>
+        <pathconvert pathsep=" " property="cssfiles.clean" refid="cssfiles.raw" />
+        <exec executable="java" failonerror="true">
+            <arg line="-jar"/>
+            <arg path="${lib.dir}/js.jar"/>
+            <arg path="${lib.dir}/csslint-rhino.js" />      
+
+            <!-- your customized arguments go here -->
+            <arg line="${cssfiles.clean} --errors=errors --quiet"/>
+        </exec>        
+    </target>    
+
+    <!-- build the core library -->
+    <target name="build.core">    
+        <concat destfile="${build.dir}/${core.build.file}"  fixlastline="true">
+            <header trimleading="yes">/*! 
+            ${license.text}
+            */
+            /* Build time: ${RIGHT_NOW} */
+            </header>           
+            <filelist dir="${src.core.dir}" files="libraries.css" />
+            <fileset dir="${src.core.dir}/template" includes="*.css" excludes="*_debug.css"/>
+            <fileset dir="${src.core.dir}/grid" includes="*.css" excludes="*_debug.css"/>
+            <fileset dir="${src.core.dir}/module" includes="*.css" excludes="*_debug.css"/>
+            <fileset dir="${src.core.dir}/media" includes="*.css" excludes="*_debug.css"/>
+            <filelist dir="${src.core.dir}" files="content.css" />
+            <fileset dir="${src.core.dir}/heading" includes="*.css" excludes="*_debug.css"/>
+            <fileset dir="${src.core.dir}/spacing" includes="*.css" excludes="*_debug.css"/>
+            <fileset dir="${src.core.dir}/table" includes="*.css" excludes="*_debug.css"/>
+        </concat>
+    </target>    
+    
+    <!-- build the core debugging library -->
+    <target name="build.core.debug">    
+        <concat destfile="${build.dir}/${core.debug.file}"  fixlastline="true">
+            <header trimleading="yes">/*! 
+            ${license.text}
+            */
+            /* Build time: ${RIGHT_NOW} */
+            </header>           
+            <fileset dir="${src.core.dir}/template" includes="*_debug.css"/>
+            <fileset dir="${src.core.dir}/grid" includes="*_debug.css"/>
+            <fileset dir="${src.core.dir}/module" includes="*_debug.css"/>
+            <fileset dir="${src.core.dir}/media" includes="*_debug.css"/>
+            <fileset dir="${src.core.dir}/heading" includes="*_debug.css"/>
+            <fileset dir="${src.core.dir}/spacing" includes="*_debug.css"/>
+            <fileset dir="${src.core.dir}/table" includes="*_debug.css"/>
+        </concat>
+    </target>      
+    
+    <!-- build the plugins library -->
+    <target name="build.plugins">    
+        <concat destfile="${build.dir}/${plugins.build.file}"  fixlastline="true">
+            <header trimleading="yes">/*! 
+            ${license.text}
+            */
+            /* Build time: ${RIGHT_NOW} */
+            </header>           
+            <fileset dir="${src.plugins.dir}" includes="**/*.css" excludes="*_debug.css"/>
+        </concat>
+    </target>  
+    
+    <!-- Create a release with version number embedded -->
+    <target name="release" depends="build.all,changelog.update">
+        <delete dir="${release.dir}" />
+        <mkdir dir="${release.dir}"/>
+        <copy todir="${release.dir}">
+            <fileset dir="${build.dir}" includes="**/*" />
+        </copy>
+        <replaceregexp match="@VERSION@" replace="${clovercss.version}" flags="g" byline="true">
+            <fileset dir="${release.dir}" includes="**/*"/>
+        </replaceregexp>    
+    </target>
+    
+    <!-- Update CSS Lint with the latest -->
+    <target name="csslint.update">
+        <get src="${csslint.url}" dest="${lib.dir}/" />
+    </target>
+    
+    <!-- Build all files -->
+    <target name="build.all" depends="clean,build.core,build.core.debug,build.plugins"/>
+
+</project>
