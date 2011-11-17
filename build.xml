@@ -20,8 +20,6 @@
     <property name="plugins.build.file" value="clover-plugins.css"/>
     <property name="all.build.file" value="clover.css"/>
     <property name="core.debug.file" value="clover-core_debug.css"/>
-    <property name="plugins.debug.file" value="clover-plugins_debug.css"/>
-    <property name="all.debug.file" value="clover_debug.css"/>
     
     <!-- external resources -->
     <property name="csslint.url" value="https://raw.github.com/stubbornella/csslint/master/release/csslint-rhino.js"/>
@@ -96,9 +94,9 @@
             <header trimleading="yes">/*! 
             ${license.text}
             */
-            /* Build time: ${RIGHT_NOW} */
+            /* Version v@VERSION@, Build time: ${RIGHT_NOW} */
             </header>           
-            <filelist dir="${src.core.dir}" files="libraries.css" />
+            <filelist dir="${lib.dir}" files="libraries.css" />
             <fileset dir="${src.core.dir}/template" includes="*.css" excludes="*_debug.css"/>
             <fileset dir="${src.core.dir}/grid" includes="*.css" excludes="*_debug.css"/>
             <fileset dir="${src.core.dir}/module" includes="*.css" excludes="*_debug.css"/>
@@ -116,7 +114,7 @@
             <header trimleading="yes">/*! 
             ${license.text}
             */
-            /* Build time: ${RIGHT_NOW} */
+            /* Version v@VERSION@, Build time: ${RIGHT_NOW} */
             </header>           
             <fileset dir="${src.core.dir}/template" includes="*_debug.css"/>
             <fileset dir="${src.core.dir}/grid" includes="*_debug.css"/>
@@ -158,6 +156,10 @@
     </target>
     
     <!-- Build all files -->
-    <target name="build.all" depends="clean,build.core,build.core.debug,build.plugins"/>
+    <target name="build.all" depends="clean,build.core,build.core.debug,build.plugins">
+        <concat destfile="${build.dir}/${all.build.file}"  fixlastline="true">         
+            <filelist dir="${build.dir}" files="${core.build.file},${plugins.build.file}"/>
+        </concat>        
+    </target>
 
 </project>
