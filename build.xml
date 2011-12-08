@@ -14,6 +14,9 @@
 
     <!-- the directory containing library files -->
     <property name="lib.dir" value="./lib" /> 
+    
+    <!-- tools -->
+    <property name="yuicompressor" value="yuicompressor-2.4.7.jar" />
 
     <!-- output filenames -->
     <property name="core.build.file" value="clover-core.css"/>
@@ -44,6 +47,7 @@
         <delete dir="${build.dir}" />
     </target>
     
+    <!-- update the changelog automagically -->
     <target name="changelog.update">
         <exec executable="git" failonerror="true" outputproperty="git.tag">
             <arg line="tag"/>
@@ -86,7 +90,16 @@
             <!-- your customized arguments go here -->
             <arg line="${cssfiles.clean} --errors=errors --quiet"/>
         </exec>        
-    </target>    
+    </target>
+
+    <!-- minify CSS files with YUI Compressor -->
+    <target name="minify">       
+        <exec executable="java" failonerror="true">
+            <arg line="-jar"/>
+            <arg path="${lib.dir}/${yuicompressor}"/>
+            <arg line="-o '.css$:-min.css' ${build.dir}/*.css"/>
+        </exec>        
+    </target>
 
     <!-- build the core library -->
     <target name="build.core">    
@@ -94,7 +107,7 @@
             <header trimleading="yes">/*! 
             ${license.text}
             */
-            /* Version v@VERSION@, Build time: ${RIGHT_NOW} */
+            /*! Version v@VERSION@, Build time: ${RIGHT_NOW} */
             </header>           
             <filelist dir="${lib.dir}" files="libraries.css" />
             <fileset dir="${src.core.dir}/template" includes="*.css" excludes="*_debug.css"/>
@@ -114,7 +127,7 @@
             <header trimleading="yes">/*! 
             ${license.text}
             */
-            /* Version v@VERSION@, Build time: ${RIGHT_NOW} */
+            /*! Version v@VERSION@, Build time: ${RIGHT_NOW} */
             </header>           
             <fileset dir="${src.core.dir}/template" includes="*_debug.css"/>
             <fileset dir="${src.core.dir}/grid" includes="*_debug.css"/>
@@ -132,7 +145,7 @@
             <header trimleading="yes">/*! 
             ${license.text}
             */
-            /* Build time: ${RIGHT_NOW} */
+            /*! Version v@VERSION@, Build time: ${RIGHT_NOW} */
             </header>           
             <fileset dir="${src.plugins.dir}" includes="**/*.css" excludes="*_debug.css"/>
         </concat>
@@ -156,7 +169,7 @@
     </target>
     
     <!-- Build all files -->
-    <target name="build.all" depends="clean,lint,build.core,build.core.debug,build.plugins">
+    <target name="build.all" depends="clean,lint,build.core,build.core.debug,build.plugins,minify">
         <concat destfile="${build.dir}/${all.build.file}"  fixlastline="true">         
             <filelist dir="${build.dir}" files="${core.build.file},${plugins.build.file}"/>
         </concat>        
