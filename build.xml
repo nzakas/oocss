@@ -94,11 +94,15 @@
 
     <!-- minify CSS files with YUI Compressor -->
     <target name="minify">       
-        <exec executable="java" failonerror="true">
+        <apply executable="java" failonerror="true">
+            <fileset dir="${build.dir}" includes="*.css"/>
+            <mapper type="glob" from="*.css" to="${build.dir}/*-min.css"/>
             <arg line="-jar"/>
             <arg path="${lib.dir}/${yuicompressor}"/>
-            <arg line="-o '.css$:-min.css' ${build.dir}/*.css"/>
-        </exec>        
+            <arg line="-o"/>
+            <targetfile/>
+            <srcfile/>
+        </apply>        
     </target>
 
     <!-- build the core library -->
